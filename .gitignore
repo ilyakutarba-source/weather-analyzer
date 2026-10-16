@@ -48,20 +48,3 @@ logs/
 ### OS files ###
 .DS_Store
 Thumbs.db
-
-### Environment variables and secrets ###
-.env
-.env.*
-!.env.example
-application-local.yml
-application-local.yaml
-application-prod.yml
-application-prod.yaml
-
-### Logs ###
-*.log
-logs/
-
-### OS files ###
-.DS_Store
-Thumbs.db
