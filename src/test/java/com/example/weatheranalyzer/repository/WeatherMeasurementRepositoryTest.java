@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -104,6 +105,55 @@ class WeatherMeasurementRepositoryTest {
     void shouldReturnEmptyWhenNoMeasurementsExist() {
         assertTrue(
                 repository.findFirstByOrderByMeasuredAtDescIdDesc().isEmpty()
+        );
+    }
+
+    @Test
+    void shouldFindMeasurementsWithinPeriodBoundariesInTimeOrder() {
+        Instant fromInclusive =
+                Instant.parse("2026-10-21T21:00:00Z");
+        Instant toExclusive =
+                Instant.parse("2026-10-22T21:00:00Z");
+
+        saveMeasurement("2026-10-21T20:59:59Z");
+        saveMeasurement("2026-10-22T21:00:00Z");
+        saveMeasurement("2026-10-22T21:00:01Z");
+
+        WeatherMeasurement beforeEnd =
+                saveMeasurement("2026-10-22T20:59:59Z");
+
+        WeatherMeasurement atStart =
+                saveMeasurement("2026-10-21T21:00:00Z");
+
+        entityManager.clear();
+
+        List<Long> actualIds = repository
+                .findAllInPeriod(fromInclusive, toExclusive)
+                .stream()
+                .map(WeatherMeasurement::getId)
+                .toList();
+
+        assertEquals(
+                List.of(atStart.getId(), beforeEnd.getId()),
+                actualIds
+        );
+    }
+
+    @Test
+    void shouldReturnEmptyWhenMeasurementsAreOutsidePeriod() {
+        Instant fromInclusive =
+                Instant.parse("2026-10-21T21:00:00Z");
+        Instant toExclusive =
+                Instant.parse("2026-10-22T21:00:00Z");
+
+        saveMeasurement("2026-10-21T20:59:59Z");
+        saveMeasurement("2026-10-22T21:00:00Z");
+
+        entityManager.clear();
+
+        assertTrue(
+                repository.findAllInPeriod(fromInclusive, toExclusive)
+                        .isEmpty()
         );
     }
 
